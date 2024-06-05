@@ -11,7 +11,7 @@ import socket
 import sys
 import tempfile
 import uuid
-from urllib.parse import urlencode
+from urllib.parse import urlencode, unquote, urlparse
 
 try:
     import cPickle as pickle
@@ -149,6 +149,10 @@ class _Curl:
                 self.authVO = None
             if "PANDA_AUTH_ID_TOKEN" in os.environ:
                 self.idToken = os.environ["PANDA_AUTH_ID_TOKEN"]
+                if self.idToken.startswith('file:/'):
+                    fPath = unquote(urlparse(self.idToken).path)
+                    with open(fPath, 'r') as f:
+                        self.idToken = f.read().rstrip()
             else:
                 self.idToken = None
         else:
@@ -1161,7 +1165,7 @@ def insertSandboxFileInfo(userName, fileName, fileSize, checkSum, verbose=False)
     curl = _Curl()
     curl.sslCert = _x509()
     curl.sslKey = _x509()
-    curl.verbose = verbose
+    curl.verbose = True  #verbose
     # execute
     url = baseURLSSL + "/insertSandboxFileInfo"
     data = {
