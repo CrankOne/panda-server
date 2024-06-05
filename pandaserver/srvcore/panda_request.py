@@ -1,4 +1,5 @@
 from pandaserver.config import panda_config
+from urllib.parse import unquote, urlparse
 
 if panda_config.token_authType is None:
     pass
@@ -32,6 +33,9 @@ class PandaRequest:
         try:
             if panda_config.token_authType in ["scitokens", "oidc"] and "HTTP_AUTHORIZATION" in env:
                 serialized_token = env["HTTP_AUTHORIZATION"].split()[1]
+                if type(serialized_token) is str and serialized_token.startswith('file:/'):
+                    with open(unquote(urlparse(serialized_token).path), 'r') as f:
+                        serialized_token = f.read().rstrip()
                 role = None
                 if panda_config.token_authType == "oidc":
                     self.authenticated = False
